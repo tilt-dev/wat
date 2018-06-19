@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,7 +18,6 @@ import (
 
 	isatty "github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
-	"github.com/windmilleng/wat/os/ospath"
 )
 
 const trainRecencyCutoff = time.Hour
@@ -183,35 +181,6 @@ func trainAt(ctx context.Context, ws WatWorkspace, cmds []WatCommand) ([]Command
 
 	result := make([]CommandLogGroup, 0, len(cmds))
 
-	// First, create a group of the whole pipeline passing.
-	result = append(result, newBootstrapGroup(nil, cmds, func(cmd WatCommand) bool { return true }))
-
-	// Next, create a group of only one test failing for each group.
-	for _, cmd := range cmds {
-		result = append(result, newBootstrapGroup(nil, cmds, func(c WatCommand) bool { return cmd != c }))
-	}
-
-	// For each command, and each file that matches that command, we're going to
-	// create two groups: one with just that command failing, and one with that
-	// command succeeding.  This simulates "breaking" the test deliberately.
-	for _, cmd := range cmds {
-		matcher, err := ospath.NewMatcherFromPattern(cmd.FilePattern)
-		if err != nil {
-			log.Printf("Skipping malformed command (%+v): %v\n", cmd, err)
-			continue
-		}
-
-		for _, f := range files {
-			if !matcher.Match(f.name) {
-				continue
-			}
-
-			edits := []string{f.name}
-			result = append(result, newBootstrapGroup(edits, cmds, func(c WatCommand) bool { return true }))
-			result = append(result, newBootstrapGroup(edits, cmds, func(c WatCommand) bool { return cmd != c }))
-		}
-	}
-
 	// Run all commands in the current workspace.
 	recentEdit := ""
 	if len(files) > 0 && time.Since(files[0].modTime) < trainRecencyCutoff {
@@ -330,32 +299,4 @@ func fuzzAndRun(ctx context.Context, cmds []WatCommand, root, fileToFuzz string)
 		Source:      LogSourceFuzz,
 		RecentEdits: []string{fileToFuzz},
 	})
-}
-
-func newBootstrapGroup(recentEdits []string, cmds []WatCommand, successFn func(cmd WatCommand) bool) CommandLogGroup {
-	g := newCommandLogGroup(newLogContext(recentEdits))
-	for _, cmd := range cmds {
-		g.Add(newBootstrapLog(cmd, successFn(cmd)))
-	}
-	return *g
-}
-
-func newLogContext(recentEdits []string) LogContext {
-	return LogContext{
-		Source:      LogSourceBootstrap,
-		StartTime:   time.Now(),
-		RecentEdits: recentEdits,
-	}
-}
-
-func newBootstrapLog(cmd WatCommand, success bool) CommandLog {
-	return CommandLog{
-		Command: cmd.Command,
-		Success: success,
-
-		// Assume every test command takes a millisecond.
-		// This is a dumb assumption but will get quickly corrected
-		// as we get new data, because we will explore fast commands first.
-		Duration: time.Millisecond,
-	}
 }

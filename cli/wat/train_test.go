@@ -32,8 +32,8 @@ func TestOne(t *testing.T) {}
 		t.Fatalf("Train: %v", err)
 	}
 
-	if len(groups) != 5 {
-		t.Fatalf("Expected 5 groups. Actual: %+v", groups)
+	if len(groups) != 1 {
+		t.Fatalf("Expected 1 groups. Actual: %+v", groups)
 	}
 
 	for _, g := range groups {
@@ -72,8 +72,8 @@ func TestOne(t *testing.T) {}
 		t.Fatal(err)
 	}
 
-	if len(groups) != 5 {
-		t.Fatalf("Expected 5 groups. Actual: %+v", groups)
+	if len(groups) != 1 {
+		t.Fatalf("Expected 1 groups. Actual: %+v", groups)
 	}
 
 	for _, g := range groups {
@@ -108,8 +108,8 @@ func TestTrainNoMatch(t *testing.T) {
 		t.Fatalf("Train: %v", err)
 	}
 
-	if len(groups) != 3 {
-		t.Fatalf("Expected 3 groups. Actual: %+v", groups)
+	if len(groups) != 1 {
+		t.Fatalf("Expected 1 groups. Actual: %+v", groups)
 	}
 
 	for _, g := range groups {
