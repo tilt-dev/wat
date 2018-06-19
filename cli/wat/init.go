@@ -20,7 +20,7 @@ var initCmd = &cobra.Command{
 
 // Init makes the given directory into a wat project root (i.e. creates a .wat/ directory)
 func Init(dir string) error {
-	watlytics.init.Write(dir)
+	// ANALYTICS: log stat
 	path := filepath.Join(dir, kWatDirName)
 	return os.MkdirAll(path, permDir)
 }

@@ -17,7 +17,7 @@ const AsciiEsc = 27
 const AsciiNone = 0
 
 func Fatal(msg string, err error) {
-	watlytics.errs.Write(err)
+	// ANALYTICS: log stat
 	fmt.Fprintf(os.Stderr, "%s: %v\n", msg, err)
 	os.Exit(1)
 }

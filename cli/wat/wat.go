@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/windmilleng/wat/cli/analytics"
 )
 
 var CmdTimeout time.Duration
@@ -32,17 +33,21 @@ func init() {
 	rootCmd.AddCommand(trainCmd)
 }
 
+func initAnalytics() (analytics.Analytics, *cobra.Command, error) {
+	a, c, err := analytics.Init()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return a, c, nil
+}
+
 func Execute() (outerErr error) {
-	a, analyticsCmd, err := initAnalytics()
+	_, analyticsCmd, err := initAnalytics()
 	if err != nil {
 		return err
 	}
-	defer func() {
-		err := a.Flush()
-		if outerErr == nil {
-			outerErr = err
-		}
-	}()
+
 	rootCmd.AddCommand(analyticsCmd)
 
 	return rootCmd.Execute()
@@ -71,19 +76,18 @@ func wat(cmd *cobra.Command, args []string) {
 		fmt.Printf("\t%q\n", cmd.Command)
 	}
 
-	var ev recEvent
 	defer func() { // wrap in a func so we get the value of ev at end of function
-		watlytics.recs.Write(ev)
+		// ANALYTICS: log stat
 	}()
 
-	t := time.Now()
+	//t := time.Now()
 	fmt.Println("Run them? [Y/n]")
 
 	ch, err := getChar()
 	if err != nil {
 		Fatal("getChar", err)
 	}
-	ev.userLatency = time.Now().Sub(t)
+	// ANALYTICS: log stat (user latency)
 
 	runIt := UserYN(ch, true)
 	if !runIt {
@@ -91,7 +95,7 @@ func wat(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	ev.accepted = true
+	// ANALYTICS: log stat (accepted)
 
 	logContext := LogContext{
 		RecentEdits: recentEdits,
@@ -99,12 +103,12 @@ func wat(cmd *cobra.Command, args []string) {
 		Source:      LogSourceUser,
 	}
 
-	t = time.Now()
+	//t = time.Now()
 	err = RunCommands(ctx, ws, cmds, CmdTimeout, os.Stdout, os.Stderr, logContext)
 	if err != nil {
 		Fatal("RunCommands", err)
 	}
-	ev.runLatency = time.Now().Sub(t)
+	// ANALYTICS: log stat (run latency)
 }
 
 func runCmdAndLog(ctx context.Context, root string, c WatCommand, outStream, errStream io.Writer) (CommandLog, error) {

@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/windmilleng/wat/cli/analytics"
 	"github.com/windmilleng/wat/os/ospath"
 	"github.com/windmilleng/wat/os/temp"
 )
@@ -37,13 +36,6 @@ func newWatFixture(t *testing.T) *watFixture {
 	err = os.Chdir(root.Path())
 	if err != nil {
 		t.Fatalf("Error setting wd to temp dir: %v", err)
-	}
-
-	w := analytics.NewNoopAnyWriter()
-	watlytics = &watAnalytics{
-		init: analytics.NewStringWriter(w),
-		recs: &recEventWriter{del: w},
-		errs: analytics.NewErrorWriter(w),
 	}
 
 	return &watFixture{
