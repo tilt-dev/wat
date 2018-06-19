@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -156,20 +155,15 @@ type CommandLog struct {
 
 func trainAt(ctx context.Context, ws WatWorkspace, cmds []WatCommand) ([]CommandLogGroup, error) {
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		fmt.Fprintln(os.Stderr, "Beginning training...type Ctrl-C to interrupt")
+		fmt.Fprintln(os.Stderr, "Beginning training...type <Enter> or <Esc> to interrupt")
 
 		var cancel func()
 		ctx, cancel = context.WithCancel(ctx)
 		defer cancel()
 
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt)
-		defer signal.Stop(sigChan)
 		go func() {
-			for _ = range sigChan {
-				cancel()
-				break
-			}
+			waitOnInterruptChar(ctx, []rune{AsciiEnter, AsciiLineFeed, AsciiEsc})
+			cancel()
 		}()
 	}
 

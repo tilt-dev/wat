@@ -1,13 +1,20 @@
 package wat
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/term"
 )
+
+const AsciiLineFeed = 10
+const AsciiEnter = 13
+const AsciiEsc = 27
+const AsciiNone = 0
 
 func Fatal(msg string, err error) {
 	watlytics.errs.Write(err)
@@ -16,7 +23,7 @@ func Fatal(msg string, err error) {
 }
 
 func UserYN(input rune, defaultVal bool) bool {
-	if input == 13 || input == 0 { // carriage return or no input
+	if containsRune([]rune{AsciiLineFeed, AsciiEnter, AsciiNone}, input) {
 		return defaultVal
 	} else if input == 'y' || input == 'Y' {
 		return true
@@ -42,21 +49,73 @@ func getChar() (rune, error) {
 		return 0, nil
 	}
 
-	t, _ := term.Open("/dev/tty")
-	term.RawMode(t)
-	bytes := make([]byte, 1)
+	t, err := term.Open("/dev/tty", term.CBreakMode)
+	if err != nil {
+		return 0, nil
+	}
+	defer func() {
+		t.Restore()
+		t.Close()
+	}()
 
-	_, err := t.Read(bytes)
+	bytes := make([]byte, 1)
+	_, err = t.Read(bytes)
 	if err != nil {
 		return 0, err
 	}
 
-	r := rune(bytes[0])
+	return rune(bytes[0]), nil
+}
 
-	t.Restore()
-	t.Close()
+// waitOnInterruptChar returns when:
+// 1) the user types one of the interrupt chars, or
+// 2) the context times out/cancels
+// whichever comes first
+func waitOnInterruptChar(ctx context.Context, interrupts []rune) error {
+	if !isatty.IsTerminal(os.Stdout.Fd()) {
+		return fmt.Errorf("No terminal available")
+	}
 
-	return r, nil
+	t, err := term.Open("/dev/tty", term.CBreakMode)
+	if err != nil {
+		return nil
+	}
+	defer func() {
+		t.Restore()
+		t.Close()
+	}()
+
+	// Keep polling until there is data on the terminal
+	for true {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+
+		case <-time.After(200 * time.Millisecond):
+			isAvailable, err := t.Available()
+			if err != nil {
+				return err
+			}
+
+			if isAvailable == 0 {
+				continue
+			}
+
+			// There's data on the terminal! Block to read it.
+			bytes := make([]byte, 1)
+			_, err = t.Read(bytes)
+			if err != nil {
+				return err
+			}
+
+			r := rune(bytes[0])
+			if containsRune(interrupts, r) {
+				return nil
+			}
+		}
+	}
+
+	return nil
 }
 
 // dedupeAgainst returns elements of array a not in array b (i.e. the difference: A - B)
@@ -72,6 +131,15 @@ func dedupeAgainst(a, b []string) (res []string) {
 func contains(arr []string, s string) bool {
 	for _, elem := range arr {
 		if elem == s {
+			return true
+		}
+	}
+	return false
+}
+
+func containsRune(runes []rune, v rune) bool {
+	for _, r := range runes {
+		if v == r {
 			return true
 		}
 	}
