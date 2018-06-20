@@ -25,6 +25,9 @@ const trainTTL = 48 * time.Hour
 // Only fuzz files that match this suffix.
 // TODO(nick): Will we need to make this configurable?
 var fuzzSuffixes = []string{
+	// TODO(nick): Right now, we add comments to the file that
+	// will only work in JS and Go. If we add other languages, we will
+	// need to make the fuzz step more configurable.
 	".go",
 	".js",
 }
@@ -276,6 +279,10 @@ func fuzzAndRun(ctx context.Context, cmds []WatCommand, root, fileToFuzz string)
 		// if fuzzing does nothing, don't bother.
 		return CommandLogGroup{}, nil
 	}
+
+	// TODO(nick): right now this only works in JS and Go
+	newContents = append(newContents,
+		[]byte("\n// Modified by WAT fuzzer (https://github.com/windmilleng/wat)")...)
 
 	// We know the file exists, so we expect that this file mode will be ignored
 	mode := permFile
