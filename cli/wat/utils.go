@@ -9,6 +9,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/pkg/term"
+	"github.com/windmilleng/wat/utils/slices"
 )
 
 const AsciiLineFeed = 10
@@ -110,20 +111,11 @@ func waitOnInterruptChar(ctx context.Context, interrupts []rune) error {
 // dedupeAgainst returns elements of array a not in array b (i.e. the difference: A - B)
 func dedupeAgainst(a, b []string) (res []string) {
 	for _, elem := range a {
-		if !contains(b, elem) {
+		if !slices.ContainsElem(b, elem) {
 			res = append(res, elem)
 		}
 	}
 	return res
-}
-
-func contains(arr []string, s string) bool {
-	for _, elem := range arr {
-		if elem == s {
-			return true
-		}
-	}
-	return false
 }
 
 func containsRune(runes []rune, v rune) bool {
