@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const testTimeout = time.Millisecond * 100
+const testTimeout = time.Second
 
 var cmdFoo = WatCommand{Command: "echo -n foo; echo ' and foo'"}
 var logFoo = CommandLog{Command: cmdFoo.Command, Success: true}
