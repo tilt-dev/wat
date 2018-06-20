@@ -82,7 +82,7 @@ func wat(cmd *cobra.Command, args []string) {
 	}
 
 	tags := map[string]string{tagAccepted: fmt.Sprintf("%t", runIt)}
-	ws.a.Count(statRecommendation, tags, 1)
+	ws.a.Incr(statRecommendation, tags)
 
 	logContext := LogContext{
 		RecentEdits: recentEdits,

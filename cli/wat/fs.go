@@ -40,17 +40,9 @@ type WatWorkspace struct {
 
 func (ws WatWorkspace) Fatal(msg string, err error) {
 	tags := map[string]string{tagError: fmt.Sprintf("%v", err)}
-	ws.a.Count(statFatal, tags, 1)
+	ws.a.Incr(statFatal, tags)
 	fmt.Fprintf(os.Stderr, "%s: %v\n", msg, err)
 	os.Exit(1)
-}
-
-func GetWatWorkspaceAt(wd string) (WatWorkspace, error) {
-	root, err := watRoot(wd)
-	if err != nil {
-		return WatWorkspace{}, err
-	}
-	return WatWorkspace{root: root}, nil
 }
 
 func watRoot(dir string) (string, error) {

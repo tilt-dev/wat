@@ -21,7 +21,7 @@ var initCmd = &cobra.Command{
 
 // Init makes the given directory into a wat project root (i.e. creates a .wat/ directory)
 func Init(a analytics.Analytics, dir string) error {
-	a.Count(statInit, map[string]string{tagDir: dir}, 1)
+	a.Incr(statInit, map[string]string{tagDir: dir})
 	path := filepath.Join(dir, kWatDirName)
 	return os.MkdirAll(path, permDir)
 }
@@ -41,7 +41,7 @@ func initWat(cmd *cobra.Command, args []string) {
 }
 
 func GetOrInitWatWorkspace() (WatWorkspace, error) {
-	a := analytics.NewMemoryAnalytics() // ANALYTICS: should be remote analytics
+	a := analytics.NewRemoteAnalytics()
 	wd, err := ospath.Realwd()
 	if err != nil {
 		// Even if there's an error, we guarantee that the returned workspace will have a valid Analytics
