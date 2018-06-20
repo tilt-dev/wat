@@ -286,13 +286,18 @@ func fuzzAndRun(ctx context.Context, cmds []WatCommand, root, fileToFuzz string)
 
 	// We know the file exists, so we expect that this file mode will be ignored
 	mode := permFile
+
+	// It's super important that we clean up the file, even if the user
+	// tries to kill the process.
+	tearDown := createCleanup(func() {
+		ioutil.WriteFile(absPath, oldContents, mode)
+	})
+	defer tearDown()
+
 	err = ioutil.WriteFile(absPath, newContents, mode)
 	if err != nil {
 		return CommandLogGroup{}, err
 	}
-
-	// Reset the old contents when done
-	defer ioutil.WriteFile(absPath, oldContents, mode)
 
 	_, _ = fmt.Fprintf(os.Stderr, "Fuzzing %q and running all tests\n", fileToFuzz)
 	return runCmdsWithProgress(ctx, cmds, root, LogContext{

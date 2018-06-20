@@ -47,10 +47,12 @@ func getChar() (rune, error) {
 	if err != nil {
 		return 0, nil
 	}
-	defer func() {
+
+	tearDown := createCleanup(func() {
 		t.Restore()
 		t.Close()
-	}()
+	})
+	defer tearDown()
 
 	bytes := make([]byte, 1)
 	_, err = t.Read(bytes)
@@ -74,10 +76,12 @@ func waitOnInterruptChar(ctx context.Context, interrupts []rune) error {
 	if err != nil {
 		return nil
 	}
-	defer func() {
+
+	tearDown := createCleanup(func() {
 		t.Restore()
 		t.Close()
-	}()
+	})
+	defer tearDown()
 
 	// Keep polling until there is data on the terminal
 	for true {
