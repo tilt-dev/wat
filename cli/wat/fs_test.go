@@ -54,29 +54,6 @@ func TestWatRootNotExists(t *testing.T) {
 	}
 }
 
-func TestGetWatRoot(t *testing.T) {
-	f := newWatFixture(t)
-	defer f.tearDown()
-
-	_, err := GetWatWorkspaceAt(f.root.Path())
-	if err != ErrNoWatRoot {
-		t.Fatalf("Expected %v. Actual: %v", ErrNoWatRoot, err)
-	}
-
-	// wat root at f.root
-	f.watInit()
-
-	// Note: fixture setup sets wd = f.root
-	ws, err := GetWatWorkspaceAt(f.root.Path())
-	if err != nil {
-		f.t.Fatalf("Got error: %v", err)
-	}
-	rt := ws.root
-	if rt != f.root.Path() {
-		f.t.Fatalf("Expected wat root '%s', got '%s'", f.root.Path(), rt)
-	}
-}
-
 func TestRead(t *testing.T) {
 	f := newWatFixture(t)
 	defer f.tearDown()

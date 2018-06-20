@@ -28,12 +28,12 @@ func populate(cmd *cobra.Command, args []string) {
 
 	ws, err := GetOrInitWatWorkspace()
 	if err != nil {
-		Fatal("GetWatWorkspace", err)
+		ws.Fatal("GetWatWorkspace", err)
 	}
 
 	cmds, err := List(ctx, ws, 0 /* always fresh */)
 	if err != nil {
-		Fatal("Populate", err)
+		ws.Fatal("Populate", err)
 	}
 
 	fmt.Printf("Successfully populated %d commands.\n", len(cmds.Commands))
@@ -50,19 +50,19 @@ func list(cmd *cobra.Command, args []string) {
 
 	ws, err := GetOrInitWatWorkspace()
 	if err != nil {
-		Fatal("GetWatWorkspace", err)
+		ws.Fatal("GetWatWorkspace", err)
 	}
 
 	cmdList, err := List(ctx, ws, listTTL)
 	if err != nil {
-		Fatal("List", err)
+		ws.Fatal("List", err)
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	err = encoder.Encode(cmdList)
 	if err != nil {
-		Fatal("Encode", err)
+		ws.Fatal("Encode", err)
 	}
 }
 

@@ -11,7 +11,7 @@ func TestInit(t *testing.T) {
 	f := newWatFixture(t)
 	defer f.tearDown()
 
-	err := Init(f.root.Path())
+	err := Init(f.a, f.root.Path())
 	if err != nil {
 		f.t.Fatalf("Error calling init: %v", err)
 	}

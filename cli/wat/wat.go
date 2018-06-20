@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/windmilleng/wat/cli/analytics"
 )
 
 var CmdTimeout time.Duration
@@ -33,15 +32,6 @@ func init() {
 	rootCmd.AddCommand(trainCmd)
 }
 
-func initAnalytics() (analytics.Analytics, *cobra.Command, error) {
-	a, c, err := analytics.Init()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return a, c, nil
-}
-
 func Execute() (outerErr error) {
 	_, analyticsCmd, err := initAnalytics()
 	if err != nil {
@@ -58,7 +48,7 @@ func wat(cmd *cobra.Command, args []string) {
 
 	ws, err := GetOrInitWatWorkspace()
 	if err != nil {
-		Fatal("GetWatWorkspace", err)
+		ws.Fatal("GetWatWorkspace", err)
 	}
 
 	// TODO: should probs be able to pass edits into `Decide` (or use the edits that
@@ -68,7 +58,7 @@ func wat(cmd *cobra.Command, args []string) {
 	cmds, err := Decide(ctx, ws)
 	// TODO(dbentley): grab amount of data to put into recEvent to analyze how data affects usage
 	if err != nil {
-		Fatal("Decide", err)
+		ws.Fatal("Decide", err)
 	}
 
 	fmt.Println("WAT recommends the following commands:")
@@ -76,18 +66,14 @@ func wat(cmd *cobra.Command, args []string) {
 		fmt.Printf("\t%q\n", cmd.Command)
 	}
 
-	defer func() { // wrap in a func so we get the value of ev at end of function
-		// ANALYTICS: log stat
-	}()
-
-	//t := time.Now()
+	// t := time.Now()
 	fmt.Println("Run them? [Y/n]")
 
 	ch, err := getChar()
 	if err != nil {
-		Fatal("getChar", err)
+		ws.Fatal("getChar", err)
 	}
-	// ANALYTICS: log stat (user latency)
+	// ANALYTICS: log timer (user latency)
 
 	runIt := UserYN(ch, true)
 	if !runIt {
@@ -95,7 +81,8 @@ func wat(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// ANALYTICS: log stat (accepted)
+	tags := map[string]string{tagAccepted: fmt.Sprintf("%t", runIt)}
+	ws.a.Count(statRecommendation, tags, 1)
 
 	logContext := LogContext{
 		RecentEdits: recentEdits,
@@ -103,12 +90,12 @@ func wat(cmd *cobra.Command, args []string) {
 		Source:      LogSourceUser,
 	}
 
-	//t = time.Now()
+	// t = time.Now()
 	err = RunCommands(ctx, ws, cmds, CmdTimeout, os.Stdout, os.Stderr, logContext)
 	if err != nil {
-		Fatal("RunCommands", err)
+		ws.Fatal("RunCommands", err)
 	}
-	// ANALYTICS: log stat (run latency)
+	// ANALYTICS: log timer (run latency)
 }
 
 func runCmdAndLog(ctx context.Context, root string, c WatCommand, outStream, errStream io.Writer) (CommandLog, error) {

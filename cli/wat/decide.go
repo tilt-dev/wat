@@ -34,12 +34,12 @@ func decide(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 	ws, err := GetOrInitWatWorkspace()
 	if err != nil {
-		Fatal("GetWatWorkspace", err)
+		ws.Fatal("GetWatWorkspace", err)
 	}
 
 	result, err := Decide(ctx, ws)
 	if err != nil {
-		Fatal("Decide", err)
+		ws.Fatal("Decide", err)
 	}
 
 	for _, cmd := range result {

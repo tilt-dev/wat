@@ -48,12 +48,12 @@ var _ sort.Interface = fileInfos{}
 func recent(cmd *cobra.Command, args []string) {
 	ws, err := GetOrInitWatWorkspace()
 	if err != nil {
-		Fatal("GetWatWorkspace", err)
+		ws.Fatal("GetWatWorkspace", err)
 	}
 
 	files, err := RecentFileNames(ws)
 	if err != nil {
-		Fatal("RecentFileNames", err)
+		ws.Fatal("RecentFileNames", err)
 	}
 	for _, f := range files {
 		fmt.Println(f)

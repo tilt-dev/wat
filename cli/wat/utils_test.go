@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/windmilleng/wat/cli/analytics"
 	"github.com/windmilleng/wat/os/ospath"
 	"github.com/windmilleng/wat/os/temp"
 )
@@ -20,6 +21,7 @@ type watFixture struct {
 	ctx    context.Context
 	root   *temp.TempDir
 	origWd string // For resetting wd at teardown
+	a      analytics.Analytics
 }
 
 func newWatFixture(t *testing.T) *watFixture {
@@ -43,6 +45,7 @@ func newWatFixture(t *testing.T) *watFixture {
 		ctx:    context.Background(),
 		root:   root,
 		origWd: wd,
+		a:      &analytics.MemoryAnalytics{},
 	}
 }
 

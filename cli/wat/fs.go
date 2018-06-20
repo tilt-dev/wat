@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/windmilleng/wat/cli/analytics"
 	"github.com/windmilleng/wat/os/ospath"
 )
 
@@ -34,6 +35,14 @@ const (
 
 type WatWorkspace struct {
 	root string
+	a    analytics.Analytics
+}
+
+func (ws WatWorkspace) Fatal(msg string, err error) {
+	tags := map[string]string{tagError: fmt.Sprintf("%v", err)}
+	ws.a.Count(statFatal, tags, 1)
+	fmt.Fprintf(os.Stderr, "%s: %v\n", msg, err)
+	os.Exit(1)
 }
 
 func GetWatWorkspaceAt(wd string) (WatWorkspace, error) {

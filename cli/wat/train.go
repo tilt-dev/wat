@@ -44,24 +44,24 @@ func train(cmd *cobra.Command, args []string) {
 
 	ws, err := GetOrInitWatWorkspace()
 	if err != nil {
-		Fatal("GetWatWorkspace", err)
+		ws.Fatal("GetWatWorkspace", err)
 	}
 
 	cmds, err := populateAt(ctx, ws)
 	if err != nil {
-		Fatal("List", err)
+		ws.Fatal("List", err)
 	}
 
 	logs, err := Train(ctx, ws, cmds, 0 /* always fresh */)
 	if err != nil {
-		Fatal("Train", err)
+		ws.Fatal("Train", err)
 	}
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	err = encoder.Encode(logs)
 	if err != nil {
-		Fatal("Encode", err)
+		ws.Fatal("Encode", err)
 	}
 }
 

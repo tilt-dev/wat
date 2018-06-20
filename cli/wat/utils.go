@@ -16,12 +16,6 @@ const AsciiEnter = 13
 const AsciiEsc = 27
 const AsciiNone = 0
 
-func Fatal(msg string, err error) {
-	// ANALYTICS: log stat
-	fmt.Fprintf(os.Stderr, "%s: %v\n", msg, err)
-	os.Exit(1)
-}
-
 func UserYN(input rune, defaultVal bool) bool {
 	if containsRune([]rune{AsciiLineFeed, AsciiEnter, AsciiNone}, input) {
 		return defaultVal
