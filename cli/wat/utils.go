@@ -70,7 +70,7 @@ func waitOnInterruptChar(ctx context.Context, interrupts []rune) error {
 		return fmt.Errorf("No terminal available")
 	}
 
-	t, err := term.Open("/dev/tty", term.CBreakMode)
+	t, err := term.Open("/dev/tty", term.CBreakMode, term.ReadTimeout(200*time.Millisecond))
 	if err != nil {
 		return nil
 	}
@@ -81,31 +81,22 @@ func waitOnInterruptChar(ctx context.Context, interrupts []rune) error {
 
 	// Keep polling until there is data on the terminal
 	for true {
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return ctx.Err()
+		}
 
-		case <-time.After(200 * time.Millisecond):
-			isAvailable, err := t.Available()
-			if err != nil {
-				return err
-			}
+		// We set a read timeout on the open file descriptor, so this will block until
+		// we get data or there's a timeout.
+		bytes := make([]byte, 1)
+		n, _ := t.Read(bytes)
+		if n == 0 {
+			// We timed out! Try again on the next loop.
+			continue
+		}
 
-			if isAvailable == 0 {
-				continue
-			}
-
-			// There's data on the terminal! Block to read it.
-			bytes := make([]byte, 1)
-			_, err = t.Read(bytes)
-			if err != nil {
-				return err
-			}
-
-			r := rune(bytes[0])
-			if containsRune(interrupts, r) {
-				return nil
-			}
+		r := rune(bytes[0])
+		if containsRune(interrupts, r) {
+			return nil
 		}
 	}
 
