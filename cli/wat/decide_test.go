@@ -172,12 +172,11 @@ func TestCorrelationSensitiveGainDecide(t *testing.T) {
 	}
 }
 
-func TestFailureProbability(t *testing.T) {
+func TestFailureProbabilityDifferentPackage(t *testing.T) {
 	ds := newDecisionStore()
 
-	condA := Condition{EditedFile: "a.txt"}
-	cmdWithCondA := CommandWithCondition{Command: cmdA.Command, Condition: condA}
-	prob := ds.FailureProbability(cmdWithCondA)
+	condB := Condition{EditedFile: "b.txt"}
+	prob := ds.FailureProbability(cmdA, condB)
 	expected := 0.5
 	if !roughlyEqual(prob, expected) {
 		t.Fatalf("Expected %v, actual: %v", expected, prob)
@@ -185,21 +184,21 @@ func TestFailureProbability(t *testing.T) {
 
 	ctx := LogContext{}
 	ds.addCommandHistory(cmdLogA, ctx, Condition{})
-	prob = ds.FailureProbability(cmdWithCondA)
+	prob = ds.FailureProbability(cmdA, condB)
 	expected = failProbabilityZeroCase / (1 + failProbabilityZeroCase)
 	if !roughlyEqual(prob, expected) {
 		t.Fatalf("Expected %v, actual: %v", expected, prob)
 	}
 
 	ds.addCommandHistory(cmdLogSecFailA, ctx, Condition{})
-	prob = ds.FailureProbability(cmdWithCondA)
+	prob = ds.FailureProbability(cmdA, condB)
 	expected = 0.5
 	if !roughlyEqual(prob, expected) {
 		t.Fatalf("Expected %v, actual: %v", expected, prob)
 	}
 
 	ds.addCommandHistory(cmdLogSecFailA, ctx, Condition{})
-	prob = ds.FailureProbability(cmdWithCondA)
+	prob = ds.FailureProbability(cmdA, condB)
 	expected = 0.666
 	if !roughlyEqual(prob, expected) {
 		t.Fatalf("Expected %v, actual: %v", expected, prob)
@@ -207,9 +206,42 @@ func TestFailureProbability(t *testing.T) {
 
 	// Logs that are sensitive to the most recently edited file
 	// make the narrower probability kick in.
-	ds.addCommandHistory(cmdLogA, LogContext{RecentEdits: []string{"a.txt"}}, Condition{})
-	prob = ds.FailureProbability(cmdWithCondA)
+	ds.addCommandHistory(cmdLogA, LogContext{RecentEdits: []string{"b.txt"}}, Condition{})
+	prob = ds.FailureProbability(cmdA, condB)
 	expected = failProbabilityZeroCase / (1 + failProbabilityZeroCase)
+	if !roughlyEqual(prob, expected) {
+		t.Fatalf("Expected %v, actual: %v", expected, prob)
+	}
+}
+
+func TestFailureProbabilitySamePackage(t *testing.T) {
+	ds := newDecisionStore()
+
+	condA := Condition{EditedFile: "a.txt"}
+	prob := ds.FailureProbability(cmdA, condA)
+	expected := 0.5
+	if !roughlyEqual(prob, expected) {
+		t.Fatalf("Expected %v, actual: %v", expected, prob)
+	}
+
+	ctx := LogContext{}
+	ds.addCommandHistory(cmdLogA, ctx, Condition{})
+	prob = ds.FailureProbability(cmdA, condA)
+	expected = 0.5
+	if !roughlyEqual(prob, expected) {
+		t.Fatalf("Expected %v, actual: %v", expected, prob)
+	}
+
+	ds.addCommandHistory(cmdLogSecFailA, ctx, Condition{})
+	prob = ds.FailureProbability(cmdA, condA)
+	expected = 0.5
+	if !roughlyEqual(prob, expected) {
+		t.Fatalf("Expected %v, actual: %v", expected, prob)
+	}
+
+	ds.addCommandHistory(cmdLogSecFailA, ctx, Condition{})
+	prob = ds.FailureProbability(cmdA, condA)
+	expected = 0.666
 	if !roughlyEqual(prob, expected) {
 		t.Fatalf("Expected %v, actual: %v", expected, prob)
 	}

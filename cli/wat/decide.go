@@ -102,14 +102,14 @@ func gainDecideWith(cmds []WatCommand, ds DecisionStore, files []fileInfo, n int
 	for len(result) < n && len(remainder) > 0 {
 		// Find the maximum-gain test in the remainder list.
 		max := remainder[0]
-		maxGain := ds.CostSensitiveGain(CommandWithCondition{Command: max.Command, Condition: cond})
+		maxGain := ds.CostSensitiveGain(max, cond)
 
 		// More than one index may have the same cost.
 		maxIndices := []int{0}
 
 		for i := 1; i < len(remainder); i++ {
 			cmd := remainder[i]
-			gain := ds.CostSensitiveGain(CommandWithCondition{Command: cmd.Command, Condition: cond})
+			gain := ds.CostSensitiveGain(cmd, cond)
 			if gain > maxGain {
 				max = cmd
 				maxIndices = []int{i}
@@ -274,30 +274,44 @@ func (s DecisionStore) Cost(cmd WatCommand) time.Duration {
 // Gain is directly proportional to failure probability, as explained in the design doc.
 // Cost is expressed in seconds
 // We weight gain higher than cost as gain ^ 2 / cost
-func (s DecisionStore) CostSensitiveGain(cmdWithCond CommandWithCondition) float64 {
-	dur := s.costs[cmdWithCond.Command].Duration
-	gain := s.FailureProbability(cmdWithCond)
+func (s DecisionStore) CostSensitiveGain(cmd WatCommand, cond Condition) float64 {
+	dur := s.costs[cmd.Command].Duration
+	gain := s.FailureProbability(cmd, cond)
 	return gain * gain / dur.Seconds()
 }
 
-func (s DecisionStore) FailureProbability(cmdWithCond CommandWithCondition) float64 {
-	results, ok := s.history[cmdWithCond]
+func (s DecisionStore) FailureProbability(cmd WatCommand, cond Condition) float64 {
+	results, ok := s.history[CommandWithCondition{Command: cmd.Command, Condition: cond}]
 	if !ok {
-		ancestors := cmdWithCond.Condition.Ancestors()
+		ancestors := cond.Ancestors()
 		for _, a := range ancestors {
-			results, ok = s.history[CommandWithCondition{Command: cmdWithCond.Command, Condition: a}]
+			results, ok = s.history[CommandWithCondition{Command: cmd.Command, Condition: a}]
 			if ok {
 				break
 			}
 		}
 	}
+
+	zeroCase := failProbabilityZeroCase
+
+	// If the user is editing a file related to this command
+	// (as described by FilePattern), boost the zero case way up.
+	editedFile := cond.EditedFile
+	cmdPattern := cmd.FilePattern
+	if editedFile != "" && cmdPattern != "" {
+		matcher, err := ospath.NewMatcherFromPattern(cmdPattern)
+		if err == nil && matcher.Match(editedFile) {
+			zeroCase = 1
+		}
+	}
+
 	fail := float64(results.FailCount)
 	success := float64(results.SuccessCount)
 	if fail == 0 {
-		fail = failProbabilityZeroCase
+		fail = zeroCase
 	}
 	if success == 0 {
-		success = failProbabilityZeroCase
+		success = zeroCase
 	}
 	return fail / (fail + success)
 }
