@@ -85,7 +85,6 @@ ok  	github.com/windmilleng/wat/data/db/dbpath	(cached)
 
 - Go
 - JavaScript (with package.json)
-- Python (with pytest)
 
 We welcome contributions to add more language detection!
 

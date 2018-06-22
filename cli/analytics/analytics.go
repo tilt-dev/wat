@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const statsEndpt = "http://localhost:8118/report"
+const statsEndpt = "https://events.windmill.build/report"
 const contentType = "Content-Type"
 const contentTypeJson = "application/json"
 const statsTimeout = time.Minute
