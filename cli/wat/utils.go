@@ -15,16 +15,6 @@ import (
 const AsciiLineFeed = 10
 const AsciiEnter = 13
 const AsciiEsc = 27
-const AsciiNone = 0
-
-func UserYN(input rune, defaultVal bool) bool {
-	if containsRune([]rune{AsciiLineFeed, AsciiEnter, AsciiNone}, input) {
-		return defaultVal
-	} else if input == 'y' || input == 'Y' {
-		return true
-	}
-	return false
-}
 
 func TermBold(s string) string {
 	return fmt.Sprintf("\033[1m%s\033[0m", s)
@@ -36,32 +26,6 @@ func MustJson(obj interface{}) string {
 		panic(fmt.Sprintf("unexpected err %T: %+v, failed to jsonify: %v", obj, obj, err))
 	}
 	return string(b)
-}
-
-// getChar returns a single character entered by the user.
-func getChar() (rune, error) {
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		return 0, nil
-	}
-
-	t, err := term.Open("/dev/tty", term.CBreakMode)
-	if err != nil {
-		return 0, nil
-	}
-
-	tearDown := createCleanup(func() {
-		t.Restore()
-		t.Close()
-	})
-	defer tearDown()
-
-	bytes := make([]byte, 1)
-	_, err = t.Read(bytes)
-	if err != nil {
-		return 0, err
-	}
-
-	return rune(bytes[0]), nil
 }
 
 // waitOnInterruptChar returns when:
@@ -111,7 +75,7 @@ func waitOnInterruptChar(ctx context.Context, interrupts []rune) error {
 // dedupeAgainst returns elements of array a not in array b (i.e. the difference: A - B)
 func dedupeAgainst(a, b []string) (res []string) {
 	for _, elem := range a {
-		if !slices.ContainsElem(b, elem) {
+		if !slices.Contains(b, elem) {
 			res = append(res, elem)
 		}
 	}

@@ -51,18 +51,18 @@ func Decide(ctx context.Context, ws WatWorkspace) ([]WatCommand, error) {
 	t := time.Now()
 	cmdList, err := List(ctx, ws, listTTL)
 	if err != nil {
-		return nil, fmt.Errorf("populateAt: %v", err)
+		return nil, fmt.Errorf("List: %v", err)
 	}
 
 	files, err := ws.WalkRoot()
 	if err != nil {
-		return nil, fmt.Errorf("walkDir: %v", err)
+		return nil, fmt.Errorf("ws.WalkRoot: %v", err)
 	}
 
 	cmds := cmdList.Commands
 	logGroups, err := Train(ctx, ws, cmds, trainTTL)
 	if err != nil {
-		return nil, fmt.Errorf("train: %v", err)
+		return nil, fmt.Errorf("Train: %v", err)
 	}
 
 	sort.Sort(sort.Reverse(fileInfos(files)))

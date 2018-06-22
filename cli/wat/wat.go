@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"time"
 
+	"strconv"
+
 	"github.com/spf13/cobra"
 )
 
@@ -17,14 +19,17 @@ const Divider = "--------------------\n"
 
 const appNameWat = "wat"
 
+var dryRun bool
+
 var rootCmd = &cobra.Command{
 	Use:   "wat",
-	Short: "Wat tells you what test to run next",
+	Short: "Wat figures out what tests you should run next, and runs them for you",
 	Run:   wat,
 }
 
 func init() {
 	rootCmd.PersistentFlags().DurationVarP(&CmdTimeout, "timeout", "t", 2*time.Minute, "Timeout for running commands in WAT")
+	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "just print recommended commands, don't run them")
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(recentCmd)
@@ -45,7 +50,7 @@ func Execute() (outerErr error) {
 	return rootCmd.Execute()
 }
 
-func wat(cmd *cobra.Command, args []string) {
+func wat(_ *cobra.Command, args []string) {
 	ctx := context.Background()
 
 	ws, err := GetOrInitWatWorkspace()
@@ -58,33 +63,26 @@ func wat(cmd *cobra.Command, args []string) {
 	recentEdits, err := RecentFileNames(ws)
 
 	cmds, err := Decide(ctx, ws)
-	// TODO(dbentley): grab amount of data to put into recEvent to analyze how data affects usage
 	if err != nil {
 		ws.Fatal("Decide", err)
 	}
 
-	fmt.Println("WAT recommends the following commands:")
+	if dryRun {
+		fmt.Fprintln(os.Stderr, "WAT recommends the following commands:")
+	} else {
+		fmt.Fprintln(os.Stderr, "WAT will run the following commands:")
+	}
 	for _, cmd := range cmds {
-		fmt.Printf("\t%q\n", cmd.Command)
+		// print recommended cmds to terminal (properly escaped, but not wrapped in quotes,
+		// in case user wants to copy/paste, pipe somewhere, etc.)
+		safe := fmt.Sprintf("%q", cmd.Command)
+		fmt.Printf("\t%s\n", tryUnquote(safe))
 	}
 
-	// t := time.Now()
-	fmt.Println("Run them? [Y/n]")
-
-	ch, err := getChar()
-	if err != nil {
-		ws.Fatal("getChar", err)
-	}
-	// ANALYTICS: log timer (user latency)
-
-	runIt := UserYN(ch, true)
-	if !runIt {
-		fmt.Println("OK, suit yourself!")
+	if dryRun {
+		// it's a dry run, don't actually run the commands
 		return
 	}
-
-	tags := map[string]string{tagAccepted: fmt.Sprintf("%t", runIt)}
-	ws.a.Incr(statRecommendation, tags)
 
 	logContext := LogContext{
 		RecentEdits: recentEdits,
@@ -92,12 +90,10 @@ func wat(cmd *cobra.Command, args []string) {
 		Source:      LogSourceUser,
 	}
 
-	// t = time.Now()
 	err = RunCommands(ctx, ws, cmds, CmdTimeout, os.Stdout, os.Stderr, logContext)
 	if err != nil {
 		ws.Fatal("RunCommands", err)
 	}
-	// ANALYTICS: log timer (run latency)
 }
 
 func runCmdAndLog(ctx context.Context, root string, c WatCommand, outStream, errStream io.Writer) (CommandLog, error) {
@@ -142,7 +138,7 @@ func runCmds(ctx context.Context, root string, cmds []WatCommand, timeout time.D
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	outStream.Write([]byte(Divider))
+	errStream.Write([]byte(Divider))
 	for _, c := range cmds {
 		outStream.Write([]byte(c.PrettyCmd()))
 
@@ -151,7 +147,7 @@ func runCmds(ctx context.Context, root string, cmds []WatCommand, timeout time.D
 			return logs, err
 		}
 
-		outStream.Write([]byte(Divider))
+		errStream.Write([]byte(Divider))
 		logs = append(logs, log)
 	}
 
@@ -173,4 +169,12 @@ func RunCommands(ctx context.Context, ws WatWorkspace, cmds []WatCommand, timeou
 		Context: logContext,
 	}
 	return CmdLogGroupsToFile(ws, []CommandLogGroup{logGroup})
+}
+
+func tryUnquote(s string) string {
+	res, err := strconv.Unquote(s)
+	if err == nil {
+		return res
+	}
+	return s
 }
