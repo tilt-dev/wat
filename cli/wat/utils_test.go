@@ -67,7 +67,7 @@ func (f *watFixture) watInit() WatWorkspace {
 	if err != nil {
 		f.t.Fatalf("Error making dir: %v", err)
 	}
-	return WatWorkspace{root: f.root.Path()}
+	return WatWorkspace{root: f.root.Path(), a: analytics.NewMemoryAnalytics()}
 }
 
 func (f *watFixture) writeFile(name string) {

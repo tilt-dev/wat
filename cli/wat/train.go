@@ -166,6 +166,7 @@ func trainAt(ctx context.Context, ws WatWorkspace, cmds []WatCommand) ([]Command
 
 		go func() {
 			waitOnInterruptChar(ctx, []rune{AsciiEnter, AsciiLineFeed, AsciiEsc})
+			ws.a.Incr(statTrainingInterrupted, nil)
 			cancel()
 		}()
 	}

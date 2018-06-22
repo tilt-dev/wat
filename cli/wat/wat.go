@@ -15,6 +15,8 @@ var CmdTimeout time.Duration
 
 const Divider = "--------------------\n"
 
+const appNameWat = "wat"
+
 var rootCmd = &cobra.Command{
 	Use:   "wat",
 	Short: "Wat tells you what test to run next",
@@ -159,11 +161,13 @@ func runCmds(ctx context.Context, root string, cmds []WatCommand, timeout time.D
 // Runs the given commands and logs their results to file for use in making our ML model
 func RunCommands(ctx context.Context, ws WatWorkspace, cmds []WatCommand, timeout time.Duration,
 	outStream, errStream io.Writer, logContext LogContext) error {
+	t := time.Now()
 	logs, err := runCmds(ctx, ws.Root(), cmds, timeout, outStream, errStream)
 	if err != nil {
 		// If we got an unexpected err running commands, don't bother logging
 		return err
 	}
+	ws.a.Timer(timerCommandsRun, time.Since(t), nil)
 	logGroup := CommandLogGroup{
 		Logs:    logs,
 		Context: logContext,

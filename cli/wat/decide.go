@@ -48,6 +48,7 @@ func decide(cmd *cobra.Command, args []string) {
 }
 
 func Decide(ctx context.Context, ws WatWorkspace) ([]WatCommand, error) {
+	t := time.Now()
 	cmdList, err := List(ctx, ws, listTTL)
 	if err != nil {
 		return nil, fmt.Errorf("populateAt: %v", err)
@@ -65,7 +66,9 @@ func Decide(ctx context.Context, ws WatWorkspace) ([]WatCommand, error) {
 	}
 
 	sort.Sort(sort.Reverse(fileInfos(files)))
-	return decideWith(cmds, logGroups, files, nDecideCommands), nil
+	res := decideWith(cmds, logGroups, files, nDecideCommands)
+	ws.a.Timer(timerDecide, time.Since(t), nil)
+	return res, nil
 }
 
 // Choose the top N commands to run.

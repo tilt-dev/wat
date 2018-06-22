@@ -7,20 +7,24 @@ import (
 
 // Stat names
 const (
-	statFatal          string = "fatal"
-	statInit           string = "init"
-	statRecommendation string = "recommendation"
+	statFatal               = "fatal"
+	statInit                = "init"
+	statRecommendation      = "recommendation"
+	statTrainingInterrupted = "training_interrupted"
+
+	timerCommandsRun = "commands_run"
+	timerDecide      = "decide"
 )
 
 // Tags for stats
 const (
-	tagAccepted string = "accepted"
-	tagDir      string = "dir"
-	tagError    string = "error"
+	tagAccepted = "accepted"
+	tagDir      = "dir"
+	tagError    = "error"
 )
 
 func initAnalytics() (analytics.Analytics, *cobra.Command, error) {
-	a, c, err := analytics.Init()
+	a, c, err := analytics.Init(appNameWat)
 	if err != nil {
 		return nil, nil, err
 	}

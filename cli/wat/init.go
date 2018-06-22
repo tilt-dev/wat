@@ -41,7 +41,7 @@ func initWat(cmd *cobra.Command, args []string) {
 }
 
 func GetOrInitWatWorkspace() (WatWorkspace, error) {
-	a := analytics.NewRemoteAnalytics()
+	a := analytics.NewRemoteAnalytics(appNameWat)
 	wd, err := ospath.Realwd()
 	if err != nil {
 		// Even if there's an error, we guarantee that the returned workspace will have a valid Analytics
