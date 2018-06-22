@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/boltdb/bolt"
-  packages = ["."]
-  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
-  version = "v1.3.1"
-
-[[projects]]
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -175,6 +169,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c20c54a83b7038d7411aa51216e864cf8d78d555e87cac896043eaf2ac1fab0f"
+  inputs-digest = "8655047eb911f9d8f694e4dbba874d85166ffebe15aeafdbc82858ec2bc1242c"
   solver-name = "gps-cdcl"
   solver-version = 1
