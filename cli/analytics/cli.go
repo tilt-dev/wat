@@ -22,12 +22,18 @@ func analyticsStatus(_ *cobra.Command, args []string) error {
 }
 
 func analyticsOpt(_ *cobra.Command, args []string) (outerErr error) {
-	fmt.Printf("choice can be one of {%v, %v}\n", choices[AnalyticsOptIn], choices[AnalyticsOptOut])
+	defer func() {
+		if outerErr == nil {
+			return
+		}
+		fmt.Printf("choice can be one of {%v, %v}\n", Choices[OptIn], Choices[OptOut])
+	}()
 	if len(args) == 0 {
+		fmt.Printf("choice can be one of {%v, %v}\n", Choices[OptIn], Choices[OptOut])
 		return fmt.Errorf("no choice given; pass it as first arg: <tool> analytics opt <choice>")
 	}
 	choiceStr := args[0]
-	err := SetOpt(choiceStr)
+	err := SetOptStr(choiceStr)
 	if err != nil {
 		return err
 	}

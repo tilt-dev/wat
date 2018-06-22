@@ -8,64 +8,64 @@ import (
 	"github.com/windmilleng/wat/cli/dirs"
 )
 
-type AnalyticsOpt int
+type Opt int
 
 const (
-	AnalyticsOptDefault AnalyticsOpt = iota
-	AnalyticsOptOut
-	AnalyticsOptIn
+	OptDefault Opt = iota
+	OptOut
+	OptIn
 )
 
-const optInByDefault = false
-
-var choices = map[AnalyticsOpt]string{
-	AnalyticsOptDefault: "default",
-	AnalyticsOptOut:     "opt-out",
-	AnalyticsOptIn:      "opt-in",
+var Choices = map[Opt]string{
+	OptDefault: "default",
+	OptOut:     "opt-out",
+	OptIn:      "opt-in",
 }
 
-func OptStatus() (string, error) {
+func OptStatus() (Opt, error) {
 	txt, err := readChoiceFile()
 	if err != nil {
-		return txt, err
+		return OptDefault, err
 	}
-	choice := AnalyticsOptDefault
 
 	switch txt {
-	case choices[AnalyticsOptIn]:
-		choice = AnalyticsOptIn
-	case choices[AnalyticsOptOut]:
-		choice = AnalyticsOptOut
+	case Choices[OptIn]:
+		return OptIn, nil
+	case Choices[OptOut]:
+		return OptOut, nil
 	}
 
-	return choices[choice], nil
+	return OptDefault, nil
 }
 
-func SetOpt(c string) error {
-	choice := AnalyticsOptDefault
-	for k, v := range choices {
-		if v == c {
+func SetOptStr(s string) error {
+	choice := OptDefault
+	for k, v := range Choices {
+		if v == s {
+			choice = k
+		}
+		// allow "<appName> analytics opt in" to work
+		if v == "opt-"+s {
 			choice = k
 		}
 	}
 
-	c = choices[choice] // make sure we're using a valid string
+	return SetOpt(choice)
+}
+
+func SetOpt(c Opt) error {
+	s := Choices[c]
 
 	d, err := dirs.UseWindmillDir()
 	if err != nil {
 		return err
 	}
 
-	if err = d.WriteFile(choiceFile, c); err != nil {
+	if err = d.WriteFile(choiceFile, s); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func SetAnalyticsOpt(c AnalyticsOpt) error {
-	choice := choices[c]
-	return SetOpt(choice)
 }
 
 func readChoiceFile() (string, error) {
@@ -86,16 +86,10 @@ func readChoiceFile() (string, error) {
 }
 
 func optedIn() bool {
-	txt, err := readChoiceFile()
-	switch txt {
-	case choices[AnalyticsOptOut]:
-		return false
-	case choices[AnalyticsOptIn]:
-		return true
-	}
-
+	opt, err := OptStatus()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "analytics.optedIn: %v\n", err)
 	}
-	return optInByDefault
+
+	return opt == OptIn
 }

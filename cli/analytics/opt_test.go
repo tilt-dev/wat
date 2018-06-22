@@ -8,6 +8,36 @@ import (
 	"github.com/windmilleng/wat/os/temp"
 )
 
+func TestSetOptStr(t *testing.T) {
+	oldWindmillDir := os.Getenv("WINDMILL_DIR")
+	defer os.Setenv("WINDMILL_DIR", oldWindmillDir)
+	tmpdir, err := temp.NewDir("TestOpt")
+	if err != nil {
+		t.Fatalf("Error making temp dir: %v", err)
+	}
+
+	f := setup(t)
+
+	os.Setenv("WINDMILL_DIR", tmpdir.Path())
+
+	f.assertOptStatus(analytics.OptDefault)
+
+	analytics.SetOptStr("opt-in")
+	f.assertOptStatus(analytics.OptIn)
+
+	analytics.SetOptStr("opt-out")
+	f.assertOptStatus(analytics.OptOut)
+
+	analytics.SetOptStr("in")
+	f.assertOptStatus(analytics.OptIn)
+
+	analytics.SetOptStr("out")
+	f.assertOptStatus(analytics.OptOut)
+
+	analytics.SetOptStr("foo")
+	f.assertOptStatus(analytics.OptDefault)
+}
+
 func TestSetOpt(t *testing.T) {
 	oldWindmillDir := os.Getenv("WINDMILL_DIR")
 	defer os.Setenv("WINDMILL_DIR", oldWindmillDir)
@@ -20,40 +50,16 @@ func TestSetOpt(t *testing.T) {
 
 	os.Setenv("WINDMILL_DIR", tmpdir.Path())
 
-	f.assertOptStatus("default")
+	f.assertOptStatus(analytics.OptDefault)
 
-	analytics.SetOpt("opt-in")
-	f.assertOptStatus("opt-in")
+	analytics.SetOpt(analytics.OptIn)
+	f.assertOptStatus(analytics.OptIn)
 
-	analytics.SetOpt("opt-out")
-	f.assertOptStatus("opt-out")
+	analytics.SetOpt(analytics.OptOut)
+	f.assertOptStatus(analytics.OptOut)
 
-	analytics.SetOpt("foo")
-	f.assertOptStatus("default")
-}
-
-func TestSetAnalyticsOpt(t *testing.T) {
-	oldWindmillDir := os.Getenv("WINDMILL_DIR")
-	defer os.Setenv("WINDMILL_DIR", oldWindmillDir)
-	tmpdir, err := temp.NewDir("TestOpt")
-	if err != nil {
-		t.Fatalf("Error making temp dir: %v", err)
-	}
-
-	f := setup(t)
-
-	os.Setenv("WINDMILL_DIR", tmpdir.Path())
-
-	f.assertOptStatus("default")
-
-	analytics.SetAnalyticsOpt(analytics.AnalyticsOptIn)
-	f.assertOptStatus("opt-in")
-
-	analytics.SetAnalyticsOpt(analytics.AnalyticsOptOut)
-	f.assertOptStatus("opt-out")
-
-	analytics.SetAnalyticsOpt(99999)
-	f.assertOptStatus("default")
+	analytics.SetOpt(99999)
+	f.assertOptStatus(analytics.OptDefault)
 }
 
 type fixture struct {
@@ -64,12 +70,12 @@ func setup(t *testing.T) *fixture {
 	return &fixture{t: t}
 }
 
-func (f *fixture) assertOptStatus(expected string) {
+func (f *fixture) assertOptStatus(expected analytics.Opt) {
 	actual, err := analytics.OptStatus()
 	if err != nil {
 		f.t.Fatal(err)
 	}
 	if actual != expected {
-		f.t.Errorf("got opt status %s, expected %s", actual, expected)
+		f.t.Errorf("got opt status %v, expected %v", actual, expected)
 	}
 }

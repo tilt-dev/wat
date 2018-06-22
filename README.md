@@ -94,9 +94,17 @@ We welcome contributions to add more language detection!
 
 ## Privacy
 
-This tool sends usage reports to https://events.windmill.build, to help us
+This tool can send usage reports to https://events.windmill.build, to help us
 understand what features people use. We only report on which `wat` commands
 run and how long they run for.
+
+You can enable usage reports by running
+
+```
+wat analytics opt in
+```
+
+(and disable them by running `wat analytics opt out`.)
 
 We do not report any personally identifiable information. We do not report any
 identifiable data about your code.
@@ -105,15 +113,7 @@ We do not share this data with anyone who is not an employee of Windmill
 Engineering.  Data may be sent to third-party service providers like Datadog,
 but only to help us analyze the data.
 
-You can disable usage reports by running
-
-```
-wat analytics opt out
-```
-
 ## License
 Copyright 2018 Windmill Engineering
 
 Licensed under [the Apache License, Version 2.0](LICENSE)
-
-
