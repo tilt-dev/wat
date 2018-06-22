@@ -10,6 +10,7 @@ import (
 	"reflect"
 
 	"fmt"
+	"regexp"
 )
 
 func TestWalk(t *testing.T) {
@@ -110,4 +111,29 @@ func TestWalkDirFindsIgnore(t *testing.T) {
 	}
 
 	f.assertExpectedFiles(filesToExpected, files)
+}
+
+func TestFilterFilesMatchAny(t *testing.T) {
+	f := newWatFixture(t)
+	defer f.tearDown()
+
+	filesToExpected := map[string]bool{
+		"a.foo": true,
+		"b.foo": true,
+		"a.bar": true,
+		"b.bar": false, // does not match 'a.*' or '*.foo'
+	}
+	allFiles := []fileInfo{}
+	for file := range filesToExpected {
+		allFiles = append(allFiles, fileInfo{name: file})
+	}
+
+	regexps := []*regexp.Regexp{
+		regexp.MustCompile("a\\..*"),
+		regexp.MustCompile(".*\\.foo"),
+	}
+
+	filtered := filterFilesMatchAny(allFiles, regexps)
+
+	f.assertExpectedFiles(filesToExpected, filtered)
 }

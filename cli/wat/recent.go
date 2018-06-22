@@ -2,11 +2,13 @@ package wat
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"regexp"
 	"time"
 
 	"sort"
+
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/windmilleng/wat/os/ospath"
@@ -123,4 +125,25 @@ func walkDir(dir string) ([]fileInfo, error) {
 	})
 
 	return files, err
+}
+
+// filterFilesMatchAny takes an array of files and returns those files with names
+// matching 1 or more of the given regexes
+func filterFilesMatchAny(files []fileInfo, res []*regexp.Regexp) []fileInfo {
+	matched := []fileInfo{}
+	for _, f := range files {
+		if matchAny(f.name, res) {
+			matched = append(matched, f)
+		}
+	}
+	return matched
+}
+
+func matchAny(s string, res []*regexp.Regexp) bool {
+	for _, re := range res {
+		if re.Match([]byte(s)) {
+			return true
+		}
+	}
+	return false
 }

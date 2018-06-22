@@ -63,6 +63,7 @@ var _ plugin = userPlugin{}
 var builtins = []plugin{
 	PluginGo{},
 	PluginNodeJS{},
+	PluginPytest{},
 }
 
 func RunBuiltinPlugins(ctx context.Context, ws WatWorkspace) (result []WatCommand) {
