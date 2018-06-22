@@ -8,10 +8,9 @@ import (
 	"regexp"
 )
 
-var testRegexps = []*regexp.Regexp{
-	regexp.MustCompile("test_.*\\.py"),
-	regexp.MustCompile(".*_test\\.py"),
-}
+var rePrefix = regexp.MustCompile("(^|/)test_(.*)\\.py")
+var rePostfix = regexp.MustCompile("(.*)_test\\.py")
+var testRegexps = []*regexp.Regexp{rePrefix, rePostfix}
 
 type PluginPytest struct{}
 
@@ -23,19 +22,21 @@ func (PluginPytest) run(ctx context.Context, root string) ([]WatCommand, error) 
 		return nil, nil
 	}
 
-	// 2. where are the test files? what are the commands?
-	cmds, err := findTestFiles(ctx, root)
+	// 2. where are the test files?
+	files, err := findTestFiles(ctx, root)
 	if err != nil {
 		return nil, fmt.Errorf("findTestFiles: %v", err)
 	}
 
-	watCmds := []WatCommand{}
-	for _, c := range cmds {
-		watCmds = append(watCmds, WatCommand{Command: c})
-	}
-
 	// 3. which tests --> which files?
-	// TBD ( ⚆ _ ⚆ )
+	watCmds := []WatCommand{}
+	for _, f := range files {
+		filePattern := testFileToPattern(root, f.name)
+		watCmds = append(watCmds, WatCommand{
+			Command:     fmt.Sprintf("pytest %s", f.name),
+			FilePattern: filePattern,
+		})
+	}
 
 	return watCmds, nil
 }
@@ -62,18 +63,29 @@ func projUsesPytest(ctx context.Context, root string) bool {
 
 // This is the naive function that just finds test_*.py files, returns their
 // invocations (NOT caring about associated code)
-func findTestFiles(ctx context.Context, root string) ([]string, error) {
+func findTestFiles(ctx context.Context, root string) ([]fileInfo, error) {
 	allFiles, err := walkDir(root)
 	if err != nil {
-		return nil, fmt.Errorf("walkDirWithRegexp: %v", err)
+		return nil, fmt.Errorf("walkDir: %v", err)
 	}
-	testFiles := filterFilesMatchAny(allFiles, testRegexps)
+	return filterFilesMatchAny(allFiles, testRegexps), nil
+}
 
-	cmds := []string{}
-	for _, info := range testFiles {
-		cmds = append(cmds, fmt.Sprintf("pytest %s", info.name))
+func testFileToPattern(root, test string) string {
+	// Fallthrough: associate with all .py files
+	return "**/*.py"
+}
+
+func baseFile(test string) string {
+	if substrs := rePrefix.FindStringSubmatch(test); len(substrs) > 1 {
+		fmt.Println(substrs)
+		return fmt.Sprintf("%s.py", substrs[1])
 	}
-	return cmds, nil
+	if substrs := rePostfix.FindStringSubmatch(test); len(substrs) > 1 {
+		fmt.Println(substrs)
+		return fmt.Sprintf("%s.py", substrs[1])
+	}
+	return ""
 }
 
 var _ plugin = PluginPytest{}

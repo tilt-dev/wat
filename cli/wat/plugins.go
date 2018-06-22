@@ -63,7 +63,7 @@ var _ plugin = userPlugin{}
 var builtins = []plugin{
 	PluginGo{},
 	PluginNodeJS{},
-	//PluginPytest{}, BUG: should only match `test_` at beginning of file name
+	PluginPytest{},
 }
 
 func RunBuiltinPlugins(ctx context.Context, ws WatWorkspace) (result []WatCommand) {
