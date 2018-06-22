@@ -20,22 +20,23 @@ const Divider = "--------------------\n"
 const appNameWat = "wat"
 
 var dryRun bool
+var numCmds int
 
 var rootCmd = &cobra.Command{
 	Use:   "wat",
-	Short: "Wat figures out what tests you should run next, and runs them for you",
+	Short: "WAT (Win At Tests!) figures out what tests you should run next, and runs them for you",
 	Run:   wat,
 }
 
 func init() {
-	rootCmd.PersistentFlags().DurationVarP(&CmdTimeout, "timeout", "t", 2*time.Minute, "Timeout for running commands in WAT")
-	rootCmd.Flags().BoolVar(&dryRun, "dry-run", false, "just print recommended commands, don't run them")
+	rootCmd.PersistentFlags().DurationVarP(&CmdTimeout, "timeout", "t", 2*time.Minute, "timeout for training/running commands")
+	rootCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "just print recommended commands, don't run them")
+	rootCmd.Flags().IntVarP(&numCmds, "numCmds", "n", nDecideCommands, "number of commands WAT should suggest/run")
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(recentCmd)
 	rootCmd.AddCommand(populateCmd)
 	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(decideCmd)
 	rootCmd.AddCommand(trainCmd)
 }
 
@@ -62,7 +63,7 @@ func wat(_ *cobra.Command, args []string) {
 	// `Decide` found) rather than needing to get them twice.
 	recentEdits, err := RecentFileNames(ws)
 
-	cmds, err := Decide(ctx, ws)
+	cmds, err := Decide(ctx, ws, numCmds)
 	if err != nil {
 		ws.Fatal("Decide", err)
 	}

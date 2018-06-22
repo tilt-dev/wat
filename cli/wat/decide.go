@@ -6,7 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/windmilleng/wat/os/ospath"
 )
 
@@ -23,31 +22,7 @@ const newCostExtraWeight = 0.2
 // The extra weight to add if successCount or failCount is zero
 const failProbabilityZeroCase = 0.1
 
-// TODO(nick): Maybe this should be called 'select'? seems more programmery. Ask others what they think.
-var decideCmd = &cobra.Command{
-	Use:   "decide",
-	Short: "Decide what test to run, given the recently edited files, a list of commands, and a history log",
-	Run:   decide,
-}
-
-func decide(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
-	ws, err := GetOrInitWatWorkspace()
-	if err != nil {
-		ws.Fatal("GetWatWorkspace", err)
-	}
-
-	result, err := Decide(ctx, ws)
-	if err != nil {
-		ws.Fatal("Decide", err)
-	}
-
-	for _, cmd := range result {
-		fmt.Println(cmd.Command)
-	}
-}
-
-func Decide(ctx context.Context, ws WatWorkspace) ([]WatCommand, error) {
+func Decide(ctx context.Context, ws WatWorkspace, n int) ([]WatCommand, error) {
 	t := time.Now()
 	cmdList, err := List(ctx, ws, listTTL)
 	if err != nil {
@@ -66,7 +41,7 @@ func Decide(ctx context.Context, ws WatWorkspace) ([]WatCommand, error) {
 	}
 
 	sort.Sort(sort.Reverse(fileInfos(files)))
-	res := decideWith(cmds, logGroups, files, nDecideCommands)
+	res := decideWith(cmds, logGroups, files, n)
 	ws.a.Timer(timerDecide, time.Since(t), nil)
 	return res, nil
 }

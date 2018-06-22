@@ -49,7 +49,7 @@ The first time you run `wat`, it will:
 
 `wat` will train itself until you interrupt it by pressing `[Enter]` or `[Esc]`.
 
-The second time you run `wat`, it will suggest some tests.
+Then (and every subsequent run), `wat` will suggest some tests and run them for you. (To see the suggested commands without auto-running them, use `--dry-run`.)
 
 Here's an example of output you might see:
 
@@ -57,26 +57,29 @@ Here's an example of output you might see:
 $ wat
 Beginning training...type <Enter> or <Esc> to interrupt
 Running all tests in the current workspace
- 37 / 37 [================================================================================] 100.00% 34s
+ 37 / 37 [==========================================================================] 100.00% 12s
 
-Fuzzing "os/watch/watch.go" and running all tests
- 8 / 37 [=================>----------------------------------------------------------------]  21.62% 3s
+Fuzzing "cli/wat/wat.go" and running all tests
+ 24 / 37 [=======================================================>------------------] 66.22% 8s
 
-WAT recommends the following commands:
-	"go test github.com/windmilleng/wat/bridge/fs/fss"
-	"go test github.com/windmilleng/wat/os/sysctl"
-	"go test github.com/windmilleng/wat/data/db/dbpath"
-Run them? [Y/n]
---------------------
-$ go test github.com/windmilleng/wat/bridge/fs/fss
-ok  	github.com/windmilleng/wat/bridge/fs/fss	(cached)
---------------------
-$ go test github.com/windmilleng/wat/os/sysctl
-ok  	github.com/windmilleng/wat/os/sysctl	(cached)
+WAT will run the following commands:
+	go test github.com/windmilleng/wat/data/db/dbpath
+	go test github.com/windmilleng/wat/os/sysctl
+	go test github.com/windmilleng/wat/cli/dirs
 --------------------
 $ go test github.com/windmilleng/wat/data/db/dbpath
-ok  	github.com/windmilleng/wat/data/db/dbpath	(cached)
+ok  	github.com/windmilleng/wat/data/db/dbpath
 --------------------
+$ go test github.com/windmilleng/wat/os/sysctl
+ok  	github.com/windmilleng/wat/os/sysctl	
+--------------------
+$ go test github.com/windmilleng/wat/cli/dirs
+ok  	github.com/windmilleng/wat/cli/dirs	
+```
+
+You can also explicitly kick off training with:
+```
+wat train
 ```
 
 ## Supported Languages
