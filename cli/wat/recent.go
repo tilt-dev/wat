@@ -118,7 +118,10 @@ func walkDir(dir string) ([]fileInfo, error) {
 			return nil
 		}
 		if info.Mode().IsRegular() {
-			name, _ := ospath.Child(dir, path)
+			name, _, err := ospath.RealChild(dir, path)
+			if err != nil {
+				return err
+			}
 			files = append(files, fileInfo{name: name, modTime: info.ModTime()})
 		}
 		return nil

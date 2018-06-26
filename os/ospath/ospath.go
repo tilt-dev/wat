@@ -11,6 +11,20 @@ func Child(dir string, file string) (string, bool) {
 	return pathutil.Child(theOsPathUtil, dir, file)
 }
 
+func RealChild(dir string, file string) (string, bool, error) {
+	realDir, err := RealAbs(dir)
+	if err != nil {
+		return "", false, err
+	}
+	realFile, err := RealAbs(file)
+	if err != nil {
+		return "", false, err
+	}
+
+	rel, isChild := Child(realDir, realFile)
+	return rel, isChild, nil
+}
+
 // Returns the absolute version of this path, resolving all symlinks.
 func RealAbs(path string) (string, error) {
 	// Make the path absolute first, so that we find any symlink parents.
