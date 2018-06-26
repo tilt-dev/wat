@@ -66,24 +66,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/windmilleng/fsevents"
-  packages = ["."]
-  revision = "d9060b7f56f98ec69d5c6c1c03a87c8b7a7bc140"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/windmilleng/fsnotify"
-  packages = ["."]
-  revision = "0b53a2c990de1c2e1a158959a03a0adc3e8d9621"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/windmilleng/go-diff"
-  packages = ["diffmatchpatch"]
-  revision = "424e4153548b9b571501161e1fba61f73ba3fe36"
-
-[[projects]]
-  branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -169,6 +151,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8655047eb911f9d8f694e4dbba874d85166ffebe15aeafdbc82858ec2bc1242c"
+  inputs-digest = "ece7f6d5c89e049b47d8d6d4ea20108bd9f09f8835db4265f348bdb216d72d21"
   solver-name = "gps-cdcl"
   solver-version = 1
