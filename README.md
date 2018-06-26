@@ -1,5 +1,7 @@
 # Win At Testing with WAT!
 
+[![Build Status](https://circleci.com/gh/windmilleng/wat/tree/master.svg?style=shield)](https://circleci.com/gh/windmilleng/wat)
+
 Ever experienced brain freeze when you can’t quite come up with the right test
 incantation?
 
